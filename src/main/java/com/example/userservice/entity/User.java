@@ -22,25 +22,35 @@ import lombok.Setter;
 @NoArgsConstructor
 public class User extends Auditable {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+  @Column(nullable = false, length = 100)
+  private String name;
 
-    @Column(nullable = false, length = 100)
-    private String surname;
+  @Column(nullable = false, length = 100)
+  private String surname;
 
-    @Column(name = "birth_date")
-    private LocalDate birthDate;
+  @Column(name = "birth_date")
+  private LocalDate birthDate;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+  @Column(nullable = false, unique = true)
+  private String email;
 
-    @Column(nullable = false)
-    private boolean active = true;
+  @Column(nullable = false)
+  private boolean active = true;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PaymentCard> cards = new ArrayList<>();
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<PaymentCard> cards = new ArrayList<>();
+
+  public void addCard(PaymentCard card) {
+    cards.add(card);
+    card.setUser(this);
+  }
+
+  public void removeCard(PaymentCard card) {
+    cards.remove(card);
+    card.setUser(null);
+  }
 }
