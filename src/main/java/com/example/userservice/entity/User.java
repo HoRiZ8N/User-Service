@@ -1,5 +1,6 @@
 package com.example.userservice.entity;
 
+import com.example.userservice.exception.CardLimitExceededException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,6 +22,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class User extends Auditable {
+
+  public static final int MAX_CARDS = 5;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,6 +48,9 @@ public class User extends Auditable {
   private List<PaymentCard> cards = new ArrayList<>();
 
   public void addCard(PaymentCard card) {
+    if (cards.size() >= MAX_CARDS) {
+      throw new CardLimitExceededException(id, MAX_CARDS);
+    }
     cards.add(card);
     card.setUser(this);
   }

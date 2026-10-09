@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/changes/001-create-users.sql
   - include:
       file: db/changelog/changes/002-create-payment-cards.sql
+  - include:
+      file: db/changelog/changes/003-limit-cards-per-user.sql
