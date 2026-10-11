@@ -13,5 +13,9 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 50
+  data:
+    web:
+      pageable:
+        max-page-size: 100
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
