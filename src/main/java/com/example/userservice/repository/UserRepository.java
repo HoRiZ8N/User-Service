@@ -13,6 +13,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   @Query("select u from User u left join fetch u.cards where u.id = :id")
   Optional<User> findByIdWithCards(@Param("id") Long id);
 
+  boolean existsByEmail(String email);
+
+  boolean existsByEmailAndIdNot(String email, Long id);
+
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("update User u set u.active = :active, u.updatedAt = local datetime where u.id = :id")
   int updateActiveById(@Param("id") Long id, @Param("active") boolean active);
