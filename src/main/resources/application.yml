@@ -17,5 +17,11 @@ spring:
     web:
       pageable:
         max-page-size: 100
+  cache:
+    type: redis
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+
+app:
+  cache:
+    users-ttl: ${CACHE_USERS_TTL:10m}
