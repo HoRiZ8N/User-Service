@@ -70,6 +70,14 @@ public class UserServiceImpl implements UserService {
     changeStatus(id, false);
   }
 
+  @Override
+  @Transactional
+  public void delete(Long id) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(RESOURCE, id));
+    userRepository.delete(user);
+  }
+
   private void changeStatus(Long id, boolean active) {
     if (userRepository.updateActiveById(id, active) == 0) {
       throw new ResourceNotFoundException(RESOURCE, id);
