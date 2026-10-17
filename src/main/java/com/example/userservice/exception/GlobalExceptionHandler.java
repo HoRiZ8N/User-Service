@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.method.ParameterErrors;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -57,9 +59,15 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponseDto> handleParameterValidation(
       HandlerMethodValidationException ex, HttpServletRequest request) {
     Map<String, String> errors = new LinkedHashMap<>();
-    ex.getParameterValidationResults().forEach(result -> errors.putIfAbsent(
-        result.getMethodParameter().getParameterName(),
-        result.getResolvableErrors().getFirst().getDefaultMessage()));
+    for (ParameterErrors result : ex.getBeanResults()) {
+      result.getFieldErrors().forEach(
+          error -> errors.putIfAbsent(error.getField(), error.getDefaultMessage()));
+    }
+    for (ParameterValidationResult result : ex.getValueResults()) {
+      errors.putIfAbsent(
+          result.getMethodParameter().getParameterName(),
+          result.getResolvableErrors().getFirst().getDefaultMessage());
+    }
     return build(HttpStatus.BAD_REQUEST, "Validation failed", request, errors);
   }
 
