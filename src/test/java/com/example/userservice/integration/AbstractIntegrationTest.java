@@ -4,7 +4,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.userservice.config.CacheNames;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +32,9 @@ abstract class AbstractIntegrationTest {
 
   @Autowired
   protected JdbcTemplate jdbcTemplate;
+
+  @Autowired
+  private ObjectMapper objectMapper;
 
   @Autowired
   private CacheManager cacheManager;
@@ -62,16 +67,19 @@ abstract class AbstractIntegrationTest {
     return idOf(body);
   }
 
-  protected static String userJson(String name, String surname, String email) {
-    return """
-        {"name": "%s", "surname": "%s", "birthDate": "1990-01-01", "email": "%s"}
-        """.formatted(name, surname, email);
+  protected String userJson(String name, String surname, String email) throws Exception {
+    return objectMapper.writeValueAsString(Map.of(
+        "name", name,
+        "surname", surname,
+        "birthDate", "1990-01-01",
+        "email", email));
   }
 
-  protected static String cardJson(String number, String holder) {
-    return """
-        {"number": "%s", "holder": "%s", "expirationDate": "2035-12-31"}
-        """.formatted(number, holder);
+  protected String cardJson(String number, String holder) throws Exception {
+    return objectMapper.writeValueAsString(Map.of(
+        "number", number,
+        "holder", holder,
+        "expirationDate", "2035-12-31"));
   }
 
   protected static String nextCardNumber() {

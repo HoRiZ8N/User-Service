@@ -83,6 +83,16 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void createAcceptsSpecialCharactersInFields() throws Exception {
+    mockMvc.perform(post("/api/v1/users")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(userJson("Jean \"JJ\"", "O'Brien\\Smith", "jj@example.com")))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.name").value("Jean \"JJ\""))
+        .andExpect(jsonPath("$.surname").value("O'Brien\\Smith"));
+  }
+
+  @Test
   void getByIdReturnsNotFound() throws Exception {
     mockMvc.perform(get("/api/v1/users/{id}", 999))
         .andExpect(status().isNotFound());
