@@ -1,5 +1,6 @@
 package com.example.userservice.service.impl;
 
+import com.example.userservice.config.CacheNames;
 import com.example.userservice.dto.UserDto;
 import com.example.userservice.entity.User;
 import com.example.userservice.exception.DuplicateResourceException;
@@ -9,6 +10,9 @@ import com.example.userservice.repository.UserRepository;
 import com.example.userservice.repository.specification.UserSpecifications;
 import com.example.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,6 +38,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Cacheable(cacheNames = CacheNames.USERS, key = "#id")
   public UserDto getById(Long id) {
     return userRepository.findByIdWithCards(id)
         .map(userMapper::toDto)
@@ -48,6 +53,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   @Transactional
+  @CachePut(cacheNames = CacheNames.USERS, key = "#id")
   public UserDto update(Long id, UserDto dto) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(RESOURCE, id));
@@ -60,14 +66,25 @@ public class UserServiceImpl implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = CacheNames.USERS, key = "#id")
   public void activate(Long id) {
     changeStatus(id, true);
   }
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = CacheNames.USERS, key = "#id")
   public void deactivate(Long id) {
     changeStatus(id, false);
+  }
+
+  @Override
+  @Transactional
+  @CacheEvict(cacheNames = CacheNames.USERS, key = "#id")
+  public void delete(Long id) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(RESOURCE, id));
+    userRepository.delete(user);
   }
 
   private void changeStatus(Long id, boolean active) {
