@@ -1,8 +1,8 @@
 package com.example.userservice.exception;
 
 import com.example.userservice.dto.ErrorResponseDto;
+import com.example.userservice.security.SecurityErrorHandler;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +11,8 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.method.ParameterErrors;
 import org.springframework.validation.method.ParameterValidationResult;
@@ -110,6 +112,19 @@ public class GlobalExceptionHandler {
     return build(HttpStatus.NOT_FOUND, "Endpoint not found", request, Map.of());
   }
 
+  @ExceptionHandler(AuthenticationException.class)
+  public ResponseEntity<ErrorResponseDto> handleAuthentication(
+      AuthenticationException ex, HttpServletRequest request) {
+    return build(HttpStatus.UNAUTHORIZED, SecurityErrorHandler.AUTHENTICATION_REQUIRED,
+        request, Map.of());
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponseDto> handleAccessDenied(
+      AccessDeniedException ex, HttpServletRequest request) {
+    return build(HttpStatus.FORBIDDEN, SecurityErrorHandler.ACCESS_DENIED, request, Map.of());
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponseDto> handleUnexpected(
       Exception ex, HttpServletRequest request) {
@@ -119,13 +134,7 @@ public class GlobalExceptionHandler {
 
   private ResponseEntity<ErrorResponseDto> build(
       HttpStatus status, String message, HttpServletRequest request, Map<String, String> errors) {
-    ErrorResponseDto body = new ErrorResponseDto(
-        LocalDateTime.now(),
-        status.value(),
-        status.getReasonPhrase(),
-        message,
-        request.getRequestURI(),
-        errors);
-    return ResponseEntity.status(status).body(body);
+    return ResponseEntity.status(status)
+        .body(ErrorResponseDto.of(status, message, request.getRequestURI(), errors));
   }
 }
