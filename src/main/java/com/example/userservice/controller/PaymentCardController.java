@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +31,7 @@ public class PaymentCardController {
   private final PaymentCardService paymentCardService;
 
   @PostMapping("/users/{userId}/cards")
+  @PreAuthorize("hasRole('ADMIN') or @access.isCurrentUser(#userId)")
   public ResponseEntity<PaymentCardDto> create(
       @PathVariable @Positive Long userId, @Valid @RequestBody PaymentCardDto dto) {
     PaymentCardDto created = paymentCardService.create(userId, dto);
@@ -41,16 +43,19 @@ public class PaymentCardController {
   }
 
   @GetMapping("/users/{userId}/cards")
+  @PreAuthorize("hasRole('ADMIN') or @access.isCurrentUser(#userId)")
   public ResponseEntity<List<PaymentCardDto>> getAllByUserId(@PathVariable @Positive Long userId) {
     return ResponseEntity.ok(paymentCardService.getAllByUserId(userId));
   }
 
   @GetMapping("/cards/{id}")
+  @PreAuthorize("hasRole('ADMIN') or @access.ownsCard(#id)")
   public ResponseEntity<PaymentCardDto> getById(@PathVariable @Positive Long id) {
     return ResponseEntity.ok(paymentCardService.getById(id));
   }
 
   @GetMapping("/cards")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<PagedModel<PaymentCardDto>> getAll(
       @RequestParam(required = false) String name,
       @RequestParam(required = false) String surname,
@@ -60,18 +65,21 @@ public class PaymentCardController {
   }
 
   @PutMapping("/cards/{id}")
+  @PreAuthorize("hasRole('ADMIN') or @access.ownsCard(#id)")
   public ResponseEntity<PaymentCardDto> update(
       @PathVariable @Positive Long id, @Valid @RequestBody PaymentCardDto dto) {
     return ResponseEntity.ok(paymentCardService.update(id, dto));
   }
 
   @PatchMapping("/cards/{id}/activate")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Void> activate(@PathVariable @Positive Long id) {
     paymentCardService.activate(id);
     return ResponseEntity.noContent().build();
   }
 
   @PatchMapping("/cards/{id}/deactivate")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Void> deactivate(@PathVariable @Positive Long id) {
     paymentCardService.deactivate(id);
     return ResponseEntity.noContent().build();

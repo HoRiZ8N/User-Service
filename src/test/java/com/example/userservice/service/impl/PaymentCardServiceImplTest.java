@@ -239,6 +239,15 @@ class PaymentCardServiceImplTest {
     verifyNoInteractions(cacheManager);
   }
 
+  @Test
+  void isOwnedByDelegatesToRepository() {
+    when(paymentCardRepository.existsByIdAndUserId(CARD_ID, USER_ID)).thenReturn(true);
+    when(paymentCardRepository.existsByIdAndUserId(CARD_ID, 2L)).thenReturn(false);
+
+    assertThat(paymentCardService.isOwnedBy(CARD_ID, USER_ID)).isTrue();
+    assertThat(paymentCardService.isOwnedBy(CARD_ID, 2L)).isFalse();
+  }
+
   private static PaymentCardDto request(String number) {
     return new PaymentCardDto(null, null, number, "JOHN DOE", LocalDate.now().plusYears(2),
         null, null, null);

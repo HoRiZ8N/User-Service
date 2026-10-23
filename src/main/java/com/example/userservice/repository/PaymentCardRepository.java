@@ -29,6 +29,8 @@ public interface PaymentCardRepository
   @Query("select c.user.id from PaymentCard c where c.id = :id")
   Optional<Long> findUserIdById(@Param("id") Long id);
 
+  boolean existsByIdAndUserId(Long id, Long userId);
+
   boolean existsByNumber(String number);
 
   boolean existsByNumberAndIdNot(String number, Long id);
