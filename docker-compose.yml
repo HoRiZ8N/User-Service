@@ -39,6 +39,9 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       CACHE_USERS_TTL: ${CACHE_USERS_TTL:-10m}
+      JWT_PUBLIC_KEY_LOCATION: file:/run/secrets/jwt-public-key
+    secrets:
+      - jwt-public-key
     ports:
       - "${APP_PORT:-8080}:8080"
     depends_on:
@@ -46,6 +49,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+secrets:
+  jwt-public-key:
+    file: ${JWT_PUBLIC_KEY_FILE:-./keys/jwt-public.pem}
 
 volumes:
   postgres-data:

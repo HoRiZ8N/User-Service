@@ -5,6 +5,7 @@ target/
 
 ### Env ###
 .env
+keys/
 .env.*
 !.env.example
 
