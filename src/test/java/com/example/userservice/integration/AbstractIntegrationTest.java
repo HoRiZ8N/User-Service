@@ -1,9 +1,12 @@
 package com.example.userservice.integration;
 
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.userservice.config.CacheNames;
+import com.example.userservice.security.Role;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import java.util.Map;
@@ -16,9 +19,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -26,12 +34,18 @@ import org.springframework.test.web.servlet.MockMvc;
 abstract class AbstractIntegrationTest {
 
   private static final AtomicLong CARD_SEQUENCE = new AtomicLong(4000000000000000L);
+  private static final Long ADMIN_ID = 1000L;
 
   @Autowired
+  protected MockMvc anonymousMvc;
+
   protected MockMvc mockMvc;
 
   @Autowired
   protected JdbcTemplate jdbcTemplate;
+
+  @Autowired
+  private WebApplicationContext context;
 
   @Autowired
   private ObjectMapper objectMapper;
@@ -39,10 +53,20 @@ abstract class AbstractIntegrationTest {
   @Autowired
   private CacheManager cacheManager;
 
+  @DynamicPropertySource
+  static void jwtProperties(DynamicPropertyRegistry registry) {
+    registry.add("app.security.jwt.public-key", TestJwt::publicKeyPem);
+  }
+
   @BeforeEach
   void cleanUp() {
     jdbcTemplate.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
     usersCache().invalidate();
+    mockMvc = MockMvcBuilders.webAppContextSetup(context)
+        .apply(springSecurity())
+        .defaultRequest(get("/").header(HttpHeaders.AUTHORIZATION,
+            TestJwt.bearer(Role.ADMIN, ADMIN_ID)))
+        .build();
   }
 
   protected Cache usersCache() {
@@ -86,7 +110,7 @@ abstract class AbstractIntegrationTest {
     return String.valueOf(CARD_SEQUENCE.incrementAndGet());
   }
 
-  private static Long idOf(String json) {
+  protected static Long idOf(String json) {
     return ((Number) JsonPath.read(json, "$.id")).longValue();
   }
 }

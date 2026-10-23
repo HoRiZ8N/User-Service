@@ -25,3 +25,6 @@ spring:
 app:
   cache:
     users-ttl: ${CACHE_USERS_TTL:10m}
+  security:
+    jwt:
+      public-key: ${JWT_PUBLIC_KEY_LOCATION:file:keys/jwt-public.pem}
