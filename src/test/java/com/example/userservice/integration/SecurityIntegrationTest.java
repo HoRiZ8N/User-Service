@@ -48,12 +48,18 @@ class SecurityIntegrationTest extends AbstractIntegrationTest {
 
   @Test
   void rejectsRefreshToken() throws Exception {
-    assertInvalidToken(TestJwt.bearer(claims -> claims.claim(JwtClaims.TYPE, "refresh")));
+    assertInvalidToken(TestJwt.bearer(claims -> claims.claim(JwtClaims.TYPE, "Refresh")));
   }
 
   @Test
   void rejectsTokenWithUnknownRole() throws Exception {
-    assertInvalidToken(TestJwt.bearer(claims -> claims.claim(JwtClaims.ROLE, "ROOT")));
+    assertInvalidToken(TestJwt.bearer(claims -> claims
+        .claim(JwtClaims.REALM_ACCESS, TestJwt.roles("offline_access", "ROOT"))));
+  }
+
+  @Test
+  void rejectsTokenFromAnotherIssuer() throws Exception {
+    assertInvalidToken(TestJwt.bearer(claims -> claims.issuer("http://evil.example/realms/test")));
   }
 
   @Test

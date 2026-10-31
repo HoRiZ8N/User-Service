@@ -30,7 +30,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfig.class)
+@Import({TestcontainersConfig.class, TestJwtDecoderConfig.class})
 abstract class AbstractIntegrationTest {
 
   private static final AtomicLong CARD_SEQUENCE = new AtomicLong(4000000000000000L);
@@ -55,7 +55,7 @@ abstract class AbstractIntegrationTest {
 
   @DynamicPropertySource
   static void jwtProperties(DynamicPropertyRegistry registry) {
-    registry.add("app.security.jwt.public-key", TestJwt::publicKeyPem);
+    registry.add("app.security.jwt.issuer", () -> TestJwt.ISSUER);
   }
 
   @BeforeEach

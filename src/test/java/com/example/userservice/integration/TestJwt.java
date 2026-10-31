@@ -12,7 +12,8 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -23,6 +24,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
 final class TestJwt {
 
+  static final String ISSUER = "http://localhost:8180/realms/test";
+
   private static final KeyPair KEY_PAIR = generateKeyPair();
   private static final JwtEncoder ENCODER = encoder(KEY_PAIR);
   private static final JwtEncoder FOREIGN_ENCODER = encoder(generateKeyPair());
@@ -30,39 +33,43 @@ final class TestJwt {
   private TestJwt() {
   }
 
-  static String publicKeyPem() {
-    String body = Base64.getMimeEncoder(64, "\n".getBytes())
-        .encodeToString(KEY_PAIR.getPublic().getEncoded());
-    return "-----BEGIN PUBLIC KEY-----\n" + body + "\n-----END PUBLIC KEY-----\n";
+  static RSAPublicKey publicKey() {
+    return (RSAPublicKey) KEY_PAIR.getPublic();
   }
 
   static String bearer(Role role, Long userId) {
     return bearer(ENCODER, claims -> claims
-        .claim(JwtClaims.ROLE, role.name())
+        .claim(JwtClaims.REALM_ACCESS, roles(role.name()))
         .claim(JwtClaims.USER_ID, userId));
   }
 
   static String service() {
-    return bearer(ENCODER, claims -> claims.claim(JwtClaims.ROLE, Role.SERVICE.name()));
+    return bearer(ENCODER, claims -> claims
+        .claim(JwtClaims.REALM_ACCESS, roles(Role.SERVICE.name())));
   }
 
   static String bearer(Consumer<JwtClaimsSet.Builder> customizer) {
     return bearer(ENCODER, claims -> {
-      claims.claim(JwtClaims.ROLE, Role.USER.name()).claim(JwtClaims.USER_ID, 1L);
+      claims.claim(JwtClaims.REALM_ACCESS, roles(Role.USER.name())).claim(JwtClaims.USER_ID, 1L);
       customizer.accept(claims);
     });
   }
 
   static String foreign(Role role, Long userId) {
     return bearer(FOREIGN_ENCODER, claims -> claims
-        .claim(JwtClaims.ROLE, role.name())
+        .claim(JwtClaims.REALM_ACCESS, roles(role.name()))
         .claim(JwtClaims.USER_ID, userId));
+  }
+
+  static Map<String, Object> roles(String... names) {
+    return Map.of(JwtClaims.ROLES, List.of(names));
   }
 
   private static String bearer(JwtEncoder encoder, Consumer<JwtClaimsSet.Builder> customizer) {
     Instant now = Instant.now();
     JwtClaimsSet.Builder claims = JwtClaimsSet.builder()
         .subject("test")
+        .issuer(ISSUER)
         .issuedAt(now)
         .expiresAt(now.plus(15, ChronoUnit.MINUTES))
         .claim(JwtClaims.TYPE, JwtClaims.ACCESS_TYPE);
