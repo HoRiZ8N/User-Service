@@ -1,6 +1,5 @@
 package com.example.userservice.security;
 
-import java.util.Arrays;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
@@ -17,11 +16,11 @@ public class AccessTokenValidator implements OAuth2TokenValidator<Jwt> {
     if (!JwtClaims.ACCESS_TYPE.equals(jwt.getClaimAsString(JwtClaims.TYPE))) {
       return failure("Token is not an access token");
     }
-    String role = jwt.getClaimAsString(JwtClaims.ROLE);
-    if (Arrays.stream(Role.values()).noneMatch(r -> r.name().equals(role))) {
+    Role role = Role.highestOf(JwtClaims.realmRoles(jwt)).orElse(null);
+    if (role == null) {
       return failure("Token has no valid role");
     }
-    if (!Role.SERVICE.name().equals(role) && !(jwt.getClaim(JwtClaims.USER_ID) instanceof Number)) {
+    if (role != Role.SERVICE && JwtClaims.userId(jwt) == null) {
       return failure("Token has no user id");
     }
     return OAuth2TokenValidatorResult.success();

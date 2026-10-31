@@ -25,10 +25,8 @@ public class AccessGuard {
 
   private Long currentUserId() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication instanceof JwtAuthenticationToken token
-        && token.getToken().getClaim(JwtClaims.USER_ID) instanceof Number id) {
-      return id.longValue();
-    }
-    return null;
+    return authentication instanceof JwtAuthenticationToken token
+        ? JwtClaims.userId(token.getToken())
+        : null;
   }
 }

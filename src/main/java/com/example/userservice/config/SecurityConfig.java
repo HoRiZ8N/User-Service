@@ -2,8 +2,8 @@ package com.example.userservice.config;
 
 import com.example.userservice.security.AccessTokenValidator;
 import com.example.userservice.security.JwtClaims;
+import com.example.userservice.security.RealmRoleConverter;
 import com.example.userservice.security.SecurityErrorHandler;
-import java.security.interfaces.RSAPublicKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,12 +12,13 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -47,22 +48,27 @@ public class SecurityConfig {
   }
 
   @Bean
-  public JwtDecoder jwtDecoder(@Value("${app.security.jwt.public-key}") RSAPublicKey publicKey) {
-    NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(publicKey)
-        .signatureAlgorithm(SignatureAlgorithm.RS256)
+  public OAuth2TokenValidator<Jwt> jwtValidator(
+      @Value("${app.security.jwt.issuer}") String issuer) {
+    return new DelegatingOAuth2TokenValidator<>(
+        JwtValidators.createDefaultWithIssuer(issuer), new AccessTokenValidator());
+  }
+
+  @Bean
+  public JwtDecoder jwtDecoder(
+      @Value("${app.security.jwt.jwk-set-uri}") String jwkSetUri,
+      OAuth2TokenValidator<Jwt> jwtValidator) {
+    NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+        .jwsAlgorithm(SignatureAlgorithm.RS256)
         .build();
-    decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
-        JwtValidators.createDefault(), new AccessTokenValidator()));
+    decoder.setJwtValidator(jwtValidator);
     return decoder;
   }
 
   @Bean
   public JwtAuthenticationConverter jwtAuthenticationConverter() {
-    JwtGrantedAuthoritiesConverter authorities = new JwtGrantedAuthoritiesConverter();
-    authorities.setAuthoritiesClaimName(JwtClaims.ROLE);
-    authorities.setAuthorityPrefix("ROLE_");
     JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-    converter.setJwtGrantedAuthoritiesConverter(authorities);
+    converter.setJwtGrantedAuthoritiesConverter(new RealmRoleConverter());
     converter.setPrincipalClaimName(JwtClaims.USER_ID);
     return converter;
   }
