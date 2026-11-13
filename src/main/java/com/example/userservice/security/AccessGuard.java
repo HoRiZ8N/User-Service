@@ -1,6 +1,7 @@
 package com.example.userservice.security;
 
 import com.example.userservice.service.PaymentCardService;
+import com.example.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,10 +13,16 @@ import org.springframework.stereotype.Component;
 public class AccessGuard {
 
   private final PaymentCardService paymentCardService;
+  private final UserService userService;
 
   public boolean isCurrentUser(Long userId) {
     Long currentUserId = currentUserId();
     return currentUserId != null && currentUserId.equals(userId);
+  }
+
+  public boolean isCurrentUserEmail(String email) {
+    Long currentUserId = currentUserId();
+    return currentUserId != null && userService.isEmailOwnedBy(email, currentUserId);
   }
 
   public boolean ownsCard(Long cardId) {

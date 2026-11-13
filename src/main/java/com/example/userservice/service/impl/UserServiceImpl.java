@@ -53,6 +53,11 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public boolean isEmailOwnedBy(String email, Long userId) {
+    return userRepository.existsByEmailAndId(email, userId);
+  }
+
+  @Override
   public Page<UserDto> getAll(String name, String surname, Pageable pageable) {
     return userRepository.findAll(UserSpecifications.byFilter(name, surname), pageable)
         .map(userMapper::toDto);

@@ -57,6 +57,7 @@ public class UserController {
   }
 
   @GetMapping("/by-email")
+  @PreAuthorize("hasAnyRole('ADMIN', 'SERVICE') or @access.isCurrentUserEmail(#email)")
   public ResponseEntity<UserDto> getByEmail(@RequestParam @NotBlank @Email String email) {
     return ResponseEntity.ok(userService.getByEmail(email));
   }
