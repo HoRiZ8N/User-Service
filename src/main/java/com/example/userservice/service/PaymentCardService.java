@@ -20,4 +20,6 @@ public interface PaymentCardService {
   void activate(Long id);
 
   void deactivate(Long id);
+
+  boolean isOwnedBy(Long id, Long userId);
 }

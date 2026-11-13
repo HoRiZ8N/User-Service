@@ -10,6 +10,10 @@ public interface UserService {
 
   UserDto getById(Long id);
 
+  UserDto getByEmail(String email);
+
+  boolean isEmailOwnedBy(String email, Long userId);
+
   Page<UserDto> getAll(String name, String surname, Pageable pageable);
 
   UserDto update(Long id, UserDto dto);

@@ -1,8 +1,11 @@
 package com.example.userservice.controller;
 
 import com.example.userservice.dto.UserDto;
+import com.example.userservice.security.CurrentUserId;
 import com.example.userservice.service.UserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,6 +34,7 @@ public class UserController {
   private final UserService userService;
 
   @PostMapping
+  @PreAuthorize("hasAnyRole('ADMIN', 'SERVICE')")
   public ResponseEntity<UserDto> create(@Valid @RequestBody UserDto dto) {
     UserDto created = userService.create(dto);
     URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -39,12 +44,26 @@ public class UserController {
     return ResponseEntity.created(location).body(created);
   }
 
+  @GetMapping("/me")
+  @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+  public ResponseEntity<UserDto> getCurrent(@CurrentUserId Long userId) {
+    return ResponseEntity.ok(userService.getById(userId));
+  }
+
   @GetMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN', 'SERVICE') or @access.isCurrentUser(#id)")
   public ResponseEntity<UserDto> getById(@PathVariable @Positive Long id) {
     return ResponseEntity.ok(userService.getById(id));
   }
 
+  @GetMapping("/by-email")
+  @PreAuthorize("hasAnyRole('ADMIN', 'SERVICE') or @access.isCurrentUserEmail(#email)")
+  public ResponseEntity<UserDto> getByEmail(@RequestParam @NotBlank @Email String email) {
+    return ResponseEntity.ok(userService.getByEmail(email));
+  }
+
   @GetMapping
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<PagedModel<UserDto>> getAll(
       @RequestParam(required = false) String name,
       @RequestParam(required = false) String surname,
@@ -53,24 +72,28 @@ public class UserController {
   }
 
   @PutMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN') or @access.isCurrentUser(#id)")
   public ResponseEntity<UserDto> update(
       @PathVariable @Positive Long id, @Valid @RequestBody UserDto dto) {
     return ResponseEntity.ok(userService.update(id, dto));
   }
 
   @PatchMapping("/{id}/activate")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Void> activate(@PathVariable @Positive Long id) {
     userService.activate(id);
     return ResponseEntity.noContent().build();
   }
 
   @PatchMapping("/{id}/deactivate")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Void> deactivate(@PathVariable @Positive Long id) {
     userService.deactivate(id);
     return ResponseEntity.noContent().build();
   }
 
   @DeleteMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Void> delete(@PathVariable @Positive Long id) {
     userService.delete(id);
     return ResponseEntity.noContent().build();

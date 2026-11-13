@@ -25,3 +25,7 @@ spring:
 app:
   cache:
     users-ttl: ${CACHE_USERS_TTL:10m}
+  security:
+    jwt:
+      issuer: ${JWT_ISSUER:http://localhost:8180/realms/shop}
+      jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8180/realms/shop/protocol/openid-connect/certs}

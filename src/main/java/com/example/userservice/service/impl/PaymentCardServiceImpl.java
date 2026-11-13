@@ -97,6 +97,11 @@ public class PaymentCardServiceImpl implements PaymentCardService {
     changeStatus(id, false);
   }
 
+  @Override
+  public boolean isOwnedBy(Long id, Long userId) {
+    return paymentCardRepository.existsByIdAndUserId(id, userId);
+  }
+
   private PaymentCard findOrThrow(Long id) {
     return paymentCardRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(RESOURCE, id));
