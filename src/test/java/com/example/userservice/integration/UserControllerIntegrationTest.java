@@ -93,6 +93,31 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void getByEmailReturnsUser() throws Exception {
+    Long userId = createUser("John", "Doe", "john@example.com");
+    createCard(userId);
+
+    mockMvc.perform(get("/api/v1/users/by-email").param("email", "john@example.com"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(userId))
+        .andExpect(jsonPath("$.email").value("john@example.com"))
+        .andExpect(jsonPath("$.cards", hasSize(1)));
+  }
+
+  @Test
+  void getByEmailReturnsNotFound() throws Exception {
+    mockMvc.perform(get("/api/v1/users/by-email").param("email", "missing@example.com"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void getByEmailRejectsInvalidEmail() throws Exception {
+    mockMvc.perform(get("/api/v1/users/by-email").param("email", "not-an-email"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors.email").exists());
+  }
+
+  @Test
   void getByIdReturnsNotFound() throws Exception {
     mockMvc.perform(get("/api/v1/users/{id}", 999))
         .andExpect(status().isNotFound());

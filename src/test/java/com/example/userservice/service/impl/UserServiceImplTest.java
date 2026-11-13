@@ -90,6 +90,24 @@ class UserServiceImplTest {
   }
 
   @Test
+  void getByEmailReturnsUserWithCards() {
+    User user = user();
+    UserDto expected = response();
+    when(userRepository.findByEmailWithCards(EMAIL)).thenReturn(Optional.of(user));
+    when(userMapper.toDto(user)).thenReturn(expected);
+
+    assertThat(userService.getByEmail(EMAIL)).isEqualTo(expected);
+  }
+
+  @Test
+  void getByEmailThrowsWhenUserMissing() {
+    when(userRepository.findByEmailWithCards(EMAIL)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> userService.getByEmail(EMAIL))
+        .isInstanceOf(ResourceNotFoundException.class);
+  }
+
+  @Test
   void getAllReturnsMappedPage() {
     Pageable pageable = PageRequest.of(0, 10);
     User user = user();
