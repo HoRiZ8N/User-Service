@@ -108,6 +108,15 @@ class UserServiceImplTest {
   }
 
   @Test
+  void isEmailOwnedByDelegatesToRepository() {
+    when(userRepository.existsByEmailAndId(EMAIL, USER_ID)).thenReturn(true);
+    when(userRepository.existsByEmailAndId(EMAIL, 2L)).thenReturn(false);
+
+    assertThat(userService.isEmailOwnedBy(EMAIL, USER_ID)).isTrue();
+    assertThat(userService.isEmailOwnedBy(EMAIL, 2L)).isFalse();
+  }
+
+  @Test
   void getAllReturnsMappedPage() {
     Pageable pageable = PageRequest.of(0, 10);
     User user = user();

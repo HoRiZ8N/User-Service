@@ -119,6 +119,39 @@ class SecurityIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void userGetsOwnProfileByEmail() throws Exception {
+    Long userId = createUser("John", "Doe", "john@example.com");
+
+    mockMvc.perform(get("/api/v1/users/by-email").param("email", "john@example.com")
+            .header(HttpHeaders.AUTHORIZATION, user(userId)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(userId));
+  }
+
+  @Test
+  void userCannotGetAnotherUserByEmail() throws Exception {
+    Long userId = createUser("John", "Doe", "john@example.com");
+    createUser("Jane", "Roe", "jane@example.com");
+
+    mockMvc.perform(get("/api/v1/users/by-email").param("email", "jane@example.com")
+            .header(HttpHeaders.AUTHORIZATION, user(userId)))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get("/api/v1/users/by-email").param("email", "missing@example.com")
+            .header(HttpHeaders.AUTHORIZATION, user(userId)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void serviceGetsUserByEmail() throws Exception {
+    Long userId = createUser("John", "Doe", "john@example.com");
+
+    mockMvc.perform(get("/api/v1/users/by-email").param("email", "john@example.com")
+            .header(HttpHeaders.AUTHORIZATION, TestJwt.service()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(userId));
+  }
+
+  @Test
   void userCannotUseAdminEndpoints() throws Exception {
     Long userId = createUser("John", "Doe", "john@example.com");
     String token = user(userId);
