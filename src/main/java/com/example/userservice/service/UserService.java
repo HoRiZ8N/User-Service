@@ -10,6 +10,8 @@ public interface UserService {
 
   UserDto getById(Long id);
 
+  UserDto getByEmail(String email);
+
   Page<UserDto> getAll(String name, String surname, Pageable pageable);
 
   UserDto update(Long id, UserDto dto);

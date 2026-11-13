@@ -46,6 +46,13 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public UserDto getByEmail(String email) {
+    return userRepository.findByEmailWithCards(email)
+        .map(userMapper::toDto)
+        .orElseThrow(() -> new ResourceNotFoundException(RESOURCE, "email", email));
+  }
+
+  @Override
   public Page<UserDto> getAll(String name, String surname, Pageable pageable) {
     return userRepository.findAll(UserSpecifications.byFilter(name, surname), pageable)
         .map(userMapper::toDto);

@@ -4,6 +4,8 @@ import com.example.userservice.dto.UserDto;
 import com.example.userservice.security.CurrentUserId;
 import com.example.userservice.service.UserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,11 @@ public class UserController {
   @PreAuthorize("hasAnyRole('ADMIN', 'SERVICE') or @access.isCurrentUser(#id)")
   public ResponseEntity<UserDto> getById(@PathVariable @Positive Long id) {
     return ResponseEntity.ok(userService.getById(id));
+  }
+
+  @GetMapping("/by-email")
+  public ResponseEntity<UserDto> getByEmail(@RequestParam @NotBlank @Email String email) {
+    return ResponseEntity.ok(userService.getByEmail(email));
   }
 
   @GetMapping
